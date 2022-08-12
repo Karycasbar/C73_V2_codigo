@@ -1,0 +1,92 @@
+checkBookAvailability = async bookId => {
+    const bookRef = await db
+      .collection("books")
+      .where("book_id", "==", bookId)
+      .get();
+    var transactionType = "";
+    if (bookRef.docs.length == 0) {
+      transactionType = false;
+    } else {
+      bookRef.docs.map(doc => {
+        //si el libro está disponible, el tipo de transacción será issue
+        // de otra forma será return
+        transactionType = doc.data().is_book_available ? "issue" : "return";
+      });
+    }
+    return transactionType;
+  };
+-----------------------------------------------------------------------------------------
+var transactionType = await this.checkBookAvailability(bookId);
+    if (!transactionType) {
+      this.setState({ bookId: "", studentId: "" });
+
+-------------------------------------------------------------------------------------
+Alert.alert("El libro no existe en la base de datos de la biblioteca");
+    } else if (transactionType === "issue") {      
+        var { bookName, studentName } = this.state;
+        this.initiateBookIssue(bookId, studentId, bookName, studentName);
+
+--------------------------------------------------------------------------------------
+Alert.alert("Libro emitido al alumno");
+    } else {      
+        var { bookName, studentName } = this.state;
+        this.initiateBookReturn(bookId, studentId, bookName, studentName);
+
+----------------------------------------------------------------------------------------
+checkStudentEligibilityForBookIssue = async studentId => {
+    const studentRef = await db
+      .collection("students")
+      .where("student_id", "==", studentId)
+      .get();
+
+    var isStudentEligible = "";
+    if (studentRef.docs.length == 0) {
+      this.setState({
+        bookId: "",
+        studentId: ""
+      });
+      isStudentEligible = false;
+      Alert.alert("El id del alumno no existe en la base de datos");
+    } else {
+      studentRef.docs.map(doc => {
+        if (doc.data().number_of_books_issued < 2) {
+          isStudentEligible = true;
+        } else {
+          isStudentEligible = false;
+          //Alert.alert("El alumno ya tiene 2 libros");
+	   ToastAndroid.show("El alumno ya tiene 2 libros", ToastAndroid.SHORT);
+          this.setState({
+            bookId: "",
+            studentId: ""
+          });
+        }
+      });
+    }
+    return isStudentEligible;
+  };
+---------------------------------------------------------------------------------------------------
+
+checkStudentEligibilityForBookReturn = async (bookId, studentId) => {
+    const transactionRef = await db
+      .collection("transactions")
+      .where("book_id", "==", bookId)
+      .limit(1)
+      .get();
+    var isStudentEligible = "";
+    transactionRef.docs.map(doc => {
+      var lastBookTransaction = doc.data();
+      if (lastBookTransaction.student_id === studentId) {
+        isStudentEligible = true;
+      } else {
+        isStudentEligible = false;
+        //Alert.alert("El libro no fue emitido a este alumno");
+	 ToastAndroid.show("El libro no fue emitido a este alumno", ToastAndroid.SHORT);
+        this.setState({
+          bookId: "",
+          studentId: ""
+        });
+      }
+    });
+    return isStudentEligible;
+  };
+-------------------------------------------------------------------------------------------------------
